@@ -745,6 +745,204 @@ def note_detail(
     )
 
 
+def note_edit(
+    request: HttpRequest,
+    note_id: int
+) -> HttpResponse:
+
+    note = data.get_note(note_id)
+
+    if note is None:
+        return HttpResponse(
+            f"Note id={note_id} not found"
+        )
+
+    if request.method == "POST":
+
+        title = request.POST.get("title", "")
+        body = request.POST.get("body", "")
+        category = request.POST.get("category", "")
+        tag = request.POST.get("tag", "")
+
+        data.update_note(
+            note_id=note_id,
+            title=title,
+            body=body,
+            category=category or "qarışıq",
+            tag=tag or None
+        )
+
+        return redirect(
+            reverse(
+                "note_detail",
+                kwargs={"note_id": note_id}
+            )
+        )
+
+    form = f"""
+        <h1>Qeydi dəyiş</h1>
+
+        <p class="form-description">
+            Qeydin məlumatlarını dəyişdirin.
+        </p>
+
+        <form
+            method="post"
+            class="note-form"
+        >
+
+            {_csrf_field(request)}
+
+            <div class="form-group">
+                <label for="title">
+                    Ad
+                </label>
+
+                <input
+                    id="title"
+                    type="text"
+                    name="title"
+                    value="{escape(note['title'])}"
+                    placeholder="Qeydin adını daxil edin"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="body">
+                    Mətn
+                </label>
+
+                <textarea
+                    id="body"
+                    name="body"
+                    rows="6"
+                    placeholder="Qeydinizin mətnini bura yazın"
+                >{escape(note['body'])}</textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="tag">
+                    Tag
+                </label>
+
+                <input
+                    id="tag"
+                    type="text"
+                    name="tag"
+                    value="{escape(note['tag'] or '')}"
+                    placeholder="Məsələn: django"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="category">
+                    Kateqoriya
+                </label>
+
+                <input
+                    id="category"
+                    type="text"
+                    name="category"
+                    value="{escape(note['category'])}"
+                    placeholder="Məsələn: Backend"
+                >
+            </div>
+
+            <div class="form-actions">
+
+                <button
+                    type="submit"
+                    class="submit-button"
+                >
+                    Yadda saxla
+                </button>
+
+                <a
+                    href="{escape(reverse(
+                        'note_detail',
+                        kwargs={'note_id': note_id}
+                    ))}"
+                    class="cancel-button"
+                >
+                    Ləğv et
+                </a>
+
+            </div>
+
+        </form>
+    """
+
+    return HttpResponse(
+        _html_shell(
+            f"Qeydi dəyiş - {note['title']}",
+            form
+        )
+    )
+
+
+def note_delete(
+    request: HttpRequest,
+    note_id: int
+) -> HttpResponse:
+
+    note = data.get_note(note_id)
+
+    if note is None:
+        return HttpResponse(
+            f"Note id={note_id} not found"
+        )
+
+    if request.method == "POST":
+
+        data.delete_note(note_id)
+
+        return redirect(
+            reverse("notes_list")
+        )
+
+    body = f"""
+        <h1>Qeydi sil</h1>
+
+        <p>
+            <strong>{escape(note['title'])}</strong>
+            qeydini silmək istədiyinizə əminsiniz?
+        </p>
+
+        <form method="post" class="note-form">
+
+            {_csrf_field(request)}
+
+            <div class="form-actions">
+
+                <button
+                    type="submit"
+                    class="submit-button"
+                >
+                    Bəli, sil
+                </button>
+
+                <a
+                    href="{escape(reverse(
+                        'note_detail',
+                        kwargs={'note_id': note_id}
+                    ))}"
+                    class="cancel-button"
+                >
+                    Ləğv et
+                </a>
+
+            </div>
+
+        </form>
+    """
+
+    return HttpResponse(
+        _html_shell(
+            "Qeydi sil",
+            body
+        )
+    )
+
 def note_create(request: HttpRequest) -> HttpResponse:
     title_val = ''
     body_val = ''
@@ -758,10 +956,94 @@ def note_create(request: HttpRequest) -> HttpResponse:
         category = request.POST.get('category', "")
         tag = request.POST.get('tag')
 
-        title_val = escape(title)
-        body_val = escape(body)
-        category_val = escape(category)
-        tag_val = escape(tag)
+        if not title.strip():
+            title_val = escape(title)
+            body_val = escape(body)
+            category_val = escape(category)
+            tag_val = escape(tag or '')
+
+            form = f"""
+                <h1>Yeni qeyd yarat</h1>
+
+                <p class="form-description">
+                    Ad boş ola bilməz.
+                </p>
+
+                <form method="post" class="note-form">
+
+                    {_csrf_field(request)}
+
+                    <div class="form-group">
+                        <label for="title">Ad</label>
+
+                        <input
+                            id="title"
+                            type="text"
+                            name="title"
+                            value="{title_val}"
+                            placeholder="Qeydin adını daxil edin"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="body">Mətn</label>
+
+                        <textarea
+                            id="body"
+                            name="body"
+                            rows="6"
+                            placeholder="Qeydinizin mətnini bura yazın"
+                        >{body_val}</textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="tag">Tag</label>
+
+                        <input
+                            id="tag"
+                            type="text"
+                            name="tag"
+                            value="{tag_val}"
+                            placeholder="Məsələn: django"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="category">Kateqoriya</label>
+
+                        <input
+                            id="category"
+                            type="text"
+                            name="category"
+                            value="{category_val}"
+                            placeholder="Məsələn: Backend"
+                        >
+                    </div>
+
+                    <div class="form-actions">
+
+                        <button
+                            type="submit"
+                            class="submit-button"
+                        >
+                            Qeyd yarat
+                        </button>
+
+                        <a
+                            href="{escape(reverse('notes_list'))}"
+                            class="cancel-button"
+                        >
+                            Ləğv et
+                        </a>
+
+                    </div>
+
+                </form>
+            """
+
+            return HttpResponse(
+                _html_shell("Qeyd yarat", form)
+            )
 
         data.create_note(
             title=title,
@@ -774,17 +1056,12 @@ def note_create(request: HttpRequest) -> HttpResponse:
             reverse('notes_list')
         )
 
-    else:
-
-        form = f"""
-        <h1>
-            Yeni qeyd yarat
-        </h1>
+    form = f"""
+        <h1>Yeni qeyd yarat</h1>
 
         <p class="form-description">
             Yeni qeydin məlumatlarını daxil edin.
         </p>
-
 
         <form
             method="post"
@@ -792,7 +1069,6 @@ def note_create(request: HttpRequest) -> HttpResponse:
         >
 
             {_csrf_field(request)}
-
 
             <div class="form-group">
 
@@ -804,12 +1080,11 @@ def note_create(request: HttpRequest) -> HttpResponse:
                     id="title"
                     type="text"
                     name="title"
-                    value="{escape(title_val)}"
+                    value=""
                     placeholder="Qeydin adını daxil edin"
                 >
 
             </div>
-
 
             <div class="form-group">
 
@@ -822,10 +1097,9 @@ def note_create(request: HttpRequest) -> HttpResponse:
                     name="body"
                     rows="6"
                     placeholder="Qeydinizin mətnini bura yazın"
-                >{escape(body_val)}</textarea>
+                ></textarea>
 
             </div>
-
 
             <div class="form-group">
 
@@ -837,12 +1111,11 @@ def note_create(request: HttpRequest) -> HttpResponse:
                     id="tag"
                     type="text"
                     name="tag"
-                    value="{escape(tag_val)}"
+                    value=""
                     placeholder="Məsələn: django"
                 >
 
             </div>
-
 
             <div class="form-group">
 
@@ -854,12 +1127,11 @@ def note_create(request: HttpRequest) -> HttpResponse:
                     id="category"
                     type="text"
                     name="category"
-                    value="{escape(category_val)}"
+                    value=""
                     placeholder="Məsələn: Backend"
                 >
 
             </div>
-
 
             <div class="form-actions">
 
@@ -870,7 +1142,6 @@ def note_create(request: HttpRequest) -> HttpResponse:
                     Qeyd yarat
                 </button>
 
-
                 <a
                     href="{escape(reverse('notes_list'))}"
                     class="cancel-button"
@@ -881,7 +1152,7 @@ def note_create(request: HttpRequest) -> HttpResponse:
             </div>
 
         </form>
-        """
+    """
 
     return HttpResponse(
         _html_shell(
@@ -889,190 +1160,3 @@ def note_create(request: HttpRequest) -> HttpResponse:
             form
         )
     )
-
-
-def note_edit(request: HttpRequest, note_id:int) -> HttpResponse:
-    note = data.get_note(note_id)
-    if note is None:
-        return HttpResponse(
-            _html_shell("404 not found", f"""
-            <h1>Dəyişiklik etmək mümkün deyil</h1>
-            <p>Id={escape(str(note_id))} olan qeyd tapılmadı</p>
-            <a
-            class="button"
-            href="{escape(reverse('notes_list'))}"
-        >
-            ← Qeydlər siyahısına qayıt
-        </a>
-"""))
-    if request.method == 'POST':
-        title = request.POST.get('title', "")
-        body = request.POST.get('body', "")
-        category = request.POST.get('category', "")
-        tag = request.POST.get('tag')
-        if not title.strip():
-            err = "<p>Ad boş ola bilməz</p>"
-            note = {
-                **note,
-                "title": title,
-                "body": body,
-                "category": category,
-                "tag": tag,
-         }
-        else:
-            data.update_note(
-                note_id=note_id,
-                title=title,
-                body=body,
-                category=category or 'general',
-                tag=tag or 'misc',
-            )
-            return redirect('notes_list')
-    else:
-        err = ''
-        title_val = escape(note['title'])
-        body_val = escape(note['body'])
-        category_val = escape(note['category'])
-        tag_val = escape(note['tag'])
-
-        form = form = f"""
-        <h1>
-            Yeni qeyd yarat
-        </h1>
-
-        <p class="form-description">
-            Yeni qeydin məlumatlarını daxil edin.
-        </p>
-
-
-        <form
-            method="post"
-            class="note-form"
-        >
-
-            {_csrf_field(request)}
-
-
-            <div class="form-group">
-
-                <label for="title">
-                    Ad
-                </label>
-
-                <input
-                    id="title"
-                    type="text"
-                    name="title"
-                    value="{escape(title_val)}"
-                    placeholder="Qeydin adını daxil edin"
-                >
-
-            </div>
-
-
-            <div class="form-group">
-
-                <label for="body">
-                    Mətn
-                </label>
-
-                <textarea
-                    id="body"
-                    name="body"
-                    rows="6"
-                    placeholder="Qeydinizin mətnini bura yazın"
-                >{escape(body_val)}</textarea>
-
-            </div>
-
-
-            <div class="form-group">
-
-                <label for="tag">
-                    Tag
-                </label>
-
-                <input
-                    id="tag"
-                    type="text"
-                    name="tag"
-                    value="{escape(tag_val)}"
-                    placeholder="Məsələn: django"
-                >
-
-            </div>
-
-
-            <div class="form-group">
-
-                <label for="category">
-                    Kateqoriya
-                </label>
-
-                <input
-                    id="category"
-                    type="text"
-                    name="category"
-                    value="{escape(category_val)}"
-                    placeholder="Məsələn: Backend"
-                >
-
-            </div>
-
-
-            <div class="form-actions">
-
-                <button
-                    type="submit"
-                    class="submit-button"
-                >
-                    Yadda saxla
-                </button>
-
-
-                <a
-                    href="{escape(reverse('notes_list'))}"
-                    class="cancel-button"
-                >
-                    Ləğv et
-                </a>
-
-            </div>
-
-        </form>
-        """
-        return HttpResponse(_html_shell('Edit', form))
-
-
-def note_delete(request: HttpRequest, note_id:int) -> HttpResponse:
-    note = data.get_note(note_id)
-    if note is None:
-        return HttpResponse(
-            _html_shell("404 not found", f"""
-                    <h1>Silmək etmək mümkün deyil</h1>
-                    <p>Id={escape(str(note_id))} olan qeyd tapılmadı</p>
-                    <a
-                    class="button"
-                    href="{escape(reverse('notes_list'))}"
-                >
-                    ← Qeydlər siyahısına qayıt
-                </a>
-        """))
-
-    if request.method == 'POST':
-        data.delete_note(note_id)
-        return redirect('notes_list')
-    form = f"""
-    <h1>Qeydin silinməsi</h1>
-    <form method="post">
-    {_csrf_field(request)}
-        <button class="button" type="submit">Sil</button>
-        <a
-                    class="button"
-                    href="{escape(reverse('notes_list'))}"
-                >
-                    Ləğv et
-                </a>
-    </form>
-    """
-    return HttpResponse(_html_shell('Delete', form))
