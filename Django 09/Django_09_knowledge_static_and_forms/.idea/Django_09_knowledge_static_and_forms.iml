@@ -16,7 +16,7 @@
     <content url="file://$MODULE_DIR$">
       <excludeFolder url="file://$MODULE_DIR$/.venv" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 3.13 (Django_09_knowledge_static_and_forms)" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="~\Desktop\django 07\Django-FSDE_Oct_24_6_az\Django 09\Django_09_knowledge_static_and_forms\.venv" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
   <component name="TemplatesService">

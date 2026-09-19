@@ -2,7 +2,7 @@ from django.http import HttpResponse, HttpRequest
 from django.shortcuts import redirect, render
 
 from . import data
-from .forms import NoteForm
+from .forms import NoteForm, ContactForm
 
 
 def home(request: HttpRequest) -> HttpResponse:
@@ -88,3 +88,25 @@ def note_delete(request: HttpRequest, note_id:int) -> HttpResponse:
         data.delete_note(note_id)
         return redirect('notes_list')
     return render(request, 'notes/note_delete.html', {'note': note})
+
+
+def contact(request):
+    if request.method == "POST":
+        form = ContactForm(request.POST)
+
+        if form.is_valid():
+            name = form.cleaned_data["name"]
+
+            return render(
+                request,
+                "notes/contact_success.html",
+                {"name": name}
+            )
+    else:
+        form = ContactForm()
+
+    return render(
+        request,
+        "notes/contact.html",
+        {"form": form}
+    )

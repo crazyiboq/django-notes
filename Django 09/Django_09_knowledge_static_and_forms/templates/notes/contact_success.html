@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1>Contact Success</h1>
+
+<p>
+    Thank you {{ name }}. We have received your feedback.
+</p>
+
+<a href="{% url 'contact' %}">
+    Send new feedback
+</a>
+
+<br>
+
+<a href="{% url 'home' %}">
+    Return to home page
+</a>
+
+{% endblock %}
